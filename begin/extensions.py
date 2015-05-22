@@ -113,7 +113,7 @@ class Logging(Extension):
         # formatter
         fmt = opts.logfmt
         if fmt is None:
-            if opts.logfile is None:
+            if sys.stdout.isatty() and opts.logfile is None:
                 fmt = '%(message)s'
             else:
                 fmt = '[%(asctime)s] [%(levelname)s] [%(pathname)s:%(lineno)s] %(message)s'
