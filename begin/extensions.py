@@ -62,6 +62,17 @@ class Logging(Extension):
 
     section = 'logging'
 
+    def __init__(self, func, **kwargs):
+        Extension.__init__(self, func)
+        self.args = kwargs
+
+    def logLevelName(self, value):
+        if value is None:
+            return value
+        if isinstance(value, str):
+            return value
+        return logging.getLevelName(value)
+
     def add_arguments(self, parser, defaults):
         "Add command line arguments for configuring the logging module"
         exclusive  = parser.add_mutually_exclusive_group()
@@ -75,16 +86,16 @@ class Logging(Extension):
                 'Detailed control of logging output')
         group.add_argument('--loglvl',
                 default=defaults.from_name(
-                    'level', section=self.section, default=None),
+                    'level', section=self.section, default=self.logLevelName(self.args.get('level'))),
                 choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                 help='Set explicit log level')
         group.add_argument('--logfile',
                 default=defaults.from_name(
-                    'file', section=self.section, default=None),
+                    'file', section=self.section, default=self.args.get('filename')),
                 help='Output log messages to file')
         group.add_argument('--logfmt',
                 default=defaults.from_name(
-                    'format', section=self.section, default=None),
+                    'format', section=self.section, default=self.args.get('format')),
                 help='Log message format')
 
     def run(self, opts):
@@ -121,6 +132,15 @@ class Logging(Extension):
         handler.setFormatter(formatter)
 
 
-def logger(func):
+def logger(func=None, **kwargs):
     "Add command line extension for logging module"
+    def _logger(func):
+        return Logging(func, **kwargs)
+
+    # logger() is a decorator factory
+    if func is None and len(kwargs) > 0:
+        return _logger
+    # not correctly used to decorate a function
+    elif not callable(func):
+        raise ValueError("Function '{0!r}' is not callable".format(func))
     return Logging(func)
