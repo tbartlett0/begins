@@ -85,7 +85,7 @@ def program_name(filename, func):
     return func.__name__
 
 
-def populate_flag(parser, param, defaults, no_no):
+def populate_flag(parser, param, defaults, double_flags):
     """Add a flag option to the parser"""
     default = defaults.from_param(param)
     if not isinstance(default, bool):
@@ -94,18 +94,14 @@ def populate_flag(parser, param, defaults, no_no):
     if param.annotation is not param.empty:
         help = param.annotation + ' '
     param_name = param.name.replace('_', '-')
-    if not no_no:
-        parser.add_argument('--' + param_name,
-                action='store_true', default=default, dest=param.name,
-                help=(help + '(default: %(default)s)'if not default else ''))
-        parser.add_argument('--no-' + param_name,
-                action='store_false', default=default, dest=param.name,
-                help=(help + '(default: %(default)s)' if default else ''))
-    else:
-        parser.add_argument('--' + param_name,
-                action='store_false' if default else 'store_true',
-                default=default, dest=param.name,
-                help=(help + '(default: %(default)s)'))
+    parser.add_argument(('--no-' if default else '--') + param_name,
+            action='store_false' if default else 'store_true',
+            default=default, dest=param.name,
+            help=(help + '(default: %(default)s)'))
+    if double_flags:
+        parser.add_argument(('--' if default else '--no-') + param_name,
+                action='store_true' if default else 'store_false',
+                default=default, dest=param.name, help=help)
 
 
 def populate_option(parser, param, defaults, short_args):
@@ -129,7 +125,7 @@ def populate_option(parser, param, defaults, short_args):
 
 
 def populate_parser(parser, defaults, funcsig, short_args, lexical_order,
-                    no_no):
+                    double_flags):
     """Populate parser according to function signature
 
     Use the parameters accepted by the source function, according to the
@@ -144,7 +140,7 @@ def populate_parser(parser, defaults, funcsig, short_args, lexical_order,
                 param.kind == param.KEYWORD_ONLY or \
                 param.kind == param.POSITIONAL_ONLY:
             if isinstance(param.default, bool):
-                populate_flag(parser, param, defaults, no_no)
+                populate_flag(parser, param, defaults, double_flags)
             else:
                 populate_option(parser, param, defaults, short_args)
         elif param.kind == param.VAR_POSITIONAL:
@@ -159,7 +155,7 @@ def populate_parser(parser, defaults, funcsig, short_args, lexical_order,
 
 
 def create_parser(func, env_prefix=None, config_file=None, config_section=None,
-        short_args=True, lexical_order=False, no_no=False, sub_group=None,
+        short_args=True, lexical_order=False, double_flags=True, sub_group=None,
         plugins=None, collector=None, formatter_class=argparse.HelpFormatter):
     """Create and OptionParser object from a function definition.
 
@@ -196,7 +192,7 @@ def create_parser(func, env_prefix=None, config_file=None, config_section=None,
                     formatter_class=formatter_class)
             defaults.set_config_section(subfunc.__name__)
             populate_parser(subparser, defaults, funcsig, short_args,
-                            lexical_order, no_no)
+                            lexical_order, double_flags)
     have_extensions = False
     while hasattr(func, '__wrapped__') and not hasattr(func, '__signature__'):
         if isinstance(func, extensions.Extension):
@@ -204,7 +200,7 @@ def create_parser(func, env_prefix=None, config_file=None, config_section=None,
             have_extensions = True
         func = getattr(func, '__wrapped__')
     funcsig = signature(func)
-    populate_parser(parser, defaults, funcsig, short_args, lexical_order, no_no)
+    populate_parser(parser, defaults, funcsig, short_args, lexical_order, double_flags)
     return parser
 
 
