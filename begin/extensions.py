@@ -129,6 +129,10 @@ class Logging(Extension):
         handler.setFormatter(formatter)
 
 
+def logger_old(func):
+    "Add command line extension for logging module"
+    return Logging(func)
+
 def logger(**kwargs):
     "Add command line extension for logging module"
     def decorator(func):
