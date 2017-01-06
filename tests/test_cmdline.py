@@ -350,7 +350,7 @@ def test_keyword_only(self):
         self.opts.tracebacks = True
         self.opts.tbdir = None
         cmdline.apply_options(main, self.opts)
-        enable.assert_called_one(format='txt', logdir=None)
+        enable.assert_called_once_with(format='txt', logdir=None)
 
     def test_subcommand(self):
         @subcommands.subcommand
