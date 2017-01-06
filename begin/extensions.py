@@ -62,6 +62,11 @@ class Logging(Extension):
 
     section = 'logging'
 
+    def __init__(self, func, **kwargs):
+        super(Logging, self).__init__(func)
+        self.logger = kwargs.pop("logger", logging.getLogger())
+        self.handler = kwargs.pop("handler", None)
+
     def add_arguments(self, parser, defaults):
         "Add command line arguments for configuring the logging module"
         exclusive  = parser.add_mutually_exclusive_group()
@@ -98,18 +103,21 @@ class Logging(Extension):
         elif opts.quiet:
             level = logging.WARNING
         # logger
-        logger = logging.getLogger()
+        logger = self.logger
         for handler in logger.handlers:
             logger.removeHandler(handler)
         logger.setLevel(level)
         # handler
-        if opts.logfile is None:
-            handler = logging.StreamHandler(sys.stdout)
-        elif platform.system() != 'Windows':
-            handler = logging.handlers.WatchedFileHandler(opts.logfile)
+        if not self.handler:
+            if opts.logfile is None:
+                handler = logging.StreamHandler(sys.stdout)
+            elif platform.system() != 'Windows':
+                handler = logging.handlers.WatchedFileHandler(opts.logfile)
+            else:
+                handler = logging.FileHandler(opts.logfile)
+            logger.addHandler(handler)
         else:
-            handler = logging.FileHandler(opts.logfile)
-        logger.addHandler(handler)
+            logger.addHandler(self.handler)
         # formatter
         fmt = opts.logfmt
         if fmt is None:
@@ -121,6 +129,9 @@ class Logging(Extension):
         handler.setFormatter(formatter)
 
 
-def logger(func):
+def logger(**kwargs):
     "Add command line extension for logging module"
-    return Logging(func)
+    def decorator(func):
+        return Logging(func, **kwargs)
+    return decorator
+
