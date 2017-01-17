@@ -85,7 +85,7 @@ def program_name(filename, func):
     return func.__name__
 
 
-def populate_flag(parser, param, defaults):
+def populate_flag(parser, param, defaults, double_flags):
     """Add a flag option to the parser"""
     default = defaults.from_param(param)
     if not isinstance(default, bool):
@@ -93,16 +93,19 @@ def populate_flag(parser, param, defaults):
     help = ''
     if param.annotation is not param.empty:
         help = param.annotation + ' '
-    parser.add_argument('--' + param.name.replace('_', '-'),
-            action='store_true', default=default, dest=param.name,
-            help=(help + '(default: %(default)s)'if not default else ''))
-    parser.add_argument('--no-' + param.name.replace('_', '-'),
-            action='store_false', default=default, dest=param.name,
-            help=(help + '(default: %(default)s)' if default else ''))
+    param_name = param.name.replace('_', '-')
+    parser.add_argument(('--no-' if default else '--') + param_name,
+            action='store_false' if default else 'store_true',
+            default=default, dest=param.name,
+            help=(help + '(default: %(default)s)'))
+    if double_flags:
+        parser.add_argument(('--' if default else '--no-') + param_name,
+                action='store_true' if default else 'store_false',
+                default=default, dest=param.name, help=help)
 
 
 def populate_option(parser, param, defaults, short_args):
-    """Add a regulre option to the parser"""
+    """Add a regular option to the parser"""
     kwargs = {'default': defaults.from_param(param)}
     kwargs['metavar'] = defaults.metavar(param.name)
     if param.annotation is not param.empty:
@@ -121,7 +124,8 @@ def populate_option(parser, param, defaults, short_args):
     parser.add_argument(*args, **kwargs)
 
 
-def populate_parser(parser, defaults, funcsig, short_args, lexical_order):
+def populate_parser(parser, defaults, funcsig, short_args, lexical_order,
+                    double_flags):
     """Populate parser according to function signature
 
     Use the parameters accepted by the source function, according to the
@@ -136,7 +140,7 @@ def populate_parser(parser, defaults, funcsig, short_args, lexical_order):
                 param.kind == param.KEYWORD_ONLY or \
                 param.kind == param.POSITIONAL_ONLY:
             if isinstance(param.default, bool):
-                populate_flag(parser, param, defaults)
+                populate_flag(parser, param, defaults, double_flags)
             else:
                 populate_option(parser, param, defaults, short_args)
         elif param.kind == param.VAR_POSITIONAL:
@@ -151,8 +155,8 @@ def populate_parser(parser, defaults, funcsig, short_args, lexical_order):
 
 
 def create_parser(func, env_prefix=None, config_file=None, config_section=None,
-        short_args=True, lexical_order=False, sub_group=None, plugins=None,
-        collector=None, formatter_class=argparse.HelpFormatter):
+        short_args=True, lexical_order=False, double_flags=True, sub_group=None,
+        plugins=None, collector=None, formatter_class=argparse.HelpFormatter):
     """Create and OptionParser object from a function definition.
 
     Use the function's signature to generate an OptionParser object. Default
@@ -177,7 +181,7 @@ def create_parser(func, env_prefix=None, config_file=None, config_section=None,
             func.add_arguments(parser, defaults)
         func = getattr(func, '__wrapped__')
     funcsig = signature(func)
-    populate_parser(parser, defaults, funcsig, short_args, lexical_order)
+    populate_parser(parser, defaults, funcsig, short_args, lexical_order, double_flags)
     # Subcommands
     collector = collector if collector is not None else subcommands.COLLECTORS[sub_group]
     if plugins is not None:
@@ -195,7 +199,8 @@ def create_parser(func, env_prefix=None, config_file=None, config_section=None,
                     conflict_handler='resolve', description=subfunc.__doc__,
                     formatter_class=formatter_class)
             defaults.set_config_section(subfunc.__name__)
-            populate_parser(subparser, defaults, funcsig, short_args, lexical_order)
+            populate_parser(subparser, defaults, funcsig, short_args,
+                            lexical_order, double_flags)
     return parser
 
 
