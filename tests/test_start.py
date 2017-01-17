@@ -232,7 +232,7 @@ class TestStart(unittest.TestCase):
         init = mock.Mock()
         target = mock.Mock()
         try:
-            orig_argv= sys.argv
+            orig_argv = sys.argv
             sys.argv = orig_argv[:1] + ['subcmd', '--', 'subcmd', '--', 'subcmd']
             orig_name = globals()['__name__']
             globals()['__name__'] = "__main__"
@@ -247,6 +247,29 @@ class TestStart(unittest.TestCase):
         finally:
             sys.argv = orig_argv
             globals()['__name__'] = orig_name
+
+    def test_subcommand_required(self):
+        init = mock.Mock()
+        target = mock.Mock()
+        orig_name = globals()['__name__']
+        orig_argv = sys.argv
+        try:
+            sys.argv = orig_argv[:1]
+            globals()['__name__'] = '__main__'
+            with self.assertRaises(SystemExit) as _:
+                @begin.subcommand
+                def a():
+                    pass
+                @begin.subcommand
+                def b():
+                    pass
+                @begin.start
+                def main():
+                    pass
+        finally:
+            sys.argv = orig_argv
+            globals()['__name__'] = orig_name
+
 
     @mock.patch('pkg_resources.iter_entry_points')
     def test_plugins(self, iep):

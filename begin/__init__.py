@@ -7,7 +7,8 @@ from begin.subcommands import subcommand
 from begin.version import __version__
 
 from begin.extensions import tracebacks
-from begin.extensions import logger as logging
+from begin.extensions import logger_func as logging
+from begin.extensions import logger
 
 import begin.formatters
 import begin.utils

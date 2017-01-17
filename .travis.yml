@@ -5,9 +5,12 @@ python:
   - 3.2
   - 3.3
   - 3.4
+  - 3.5
   - pypy
 install:
   - pip install -r requirements.txt
+  # coverage 4 dropped support for 3.2 so we need to downgrade
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install 'coverage<4'; fi
   - python setup.py install
 script:
   - coverage run setup.py test
