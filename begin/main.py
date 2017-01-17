@@ -58,22 +58,8 @@ class Program(Wrapping):
 
 
 def start(func=None, **kwargs):
-    """Return True if called in a module that is executed.
-
-    Inspects the '__name__' in the stack frame of the caller, comparing it
-    to '__main__'. Thus allowing the Python idiom:
-
-    >>> if __name__ == '__main__':
-    ...     pass
-
-    To be replace with:
-
-    >>> import begin
-    >>> if begin.start():
-    ...    pass
-
-    Can also be used as a decorator to register a function to run after the
-    module has been loaded.
+    """Decorator to register a function to run after the module has been
+    loaded.
 
     >>> @begin.start
     ... def main():
@@ -108,27 +94,19 @@ def start(func=None, **kwargs):
 
     The environment variable 'PY_FIRST' will be used instead of 'FIRST'.
     """
+
     def _start(func):
-        prog = Program(func, **kwargs)
         if func.__module__ == '__main__':
+            prog = Program(func, **kwargs)
             try:
-                prog.start()
+                sys.exit(prog.start())
             except KeyboardInterrupt:
                 sys.exit(1)
-        return prog
+        return func
 
     # start() is a decorator factory
     if func is None and len(kwargs) > 0:
         return _start
-    # start() is a boolean function
-    elif func is None:
-        stack = inspect.stack()
-        if len(stack) < 1:
-            return False
-        frame = stack[1][0]
-        if not inspect.isframe(frame):
-            return False
-        return frame.f_globals['__name__'] == '__main__'
     # not correctly used to decorate a function
     elif not callable(func):
         raise ValueError("Function '{0!r}' is not callable".format(func))
