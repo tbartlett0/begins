@@ -298,6 +298,6 @@ be made using GitHub's `issues system`_.
    :target: https://coveralls.io/r/aliles/begins?branch=master
    :alt: Latest PyPI version
 
-.. |pypi_version| image:: https://pypip.in/v/begins/badge.png
-   :target: https://crate.io/packages/begins/
+.. |pypi_version| image:: https://img.shields.io/pypi/v/bloscpack.svg
+   :target: https://pypi.python.org/pypi/begins
    :alt: Latest PyPI version
