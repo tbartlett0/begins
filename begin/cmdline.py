@@ -101,7 +101,7 @@ def populate_flag(parser, param, defaults, double_flags):
     if double_flags:
         parser.add_argument(('--' if default else '--no-') + param_name,
                 action='store_true' if default else 'store_false',
-                default=default, dest=param.name, help=help)
+                default=default, dest=param.name, help='')
 
 
 def populate_option(parser, param, defaults, short_args):
