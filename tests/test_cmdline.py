@@ -115,8 +115,8 @@ def test_positional_with_annotation(self):
     parser = cmdline.create_parser(main)
     self.assertEqual(len(parser._optionals._actions), 4)
     self.assertEqual(parser._optionals._actions[1].help, 'help string')
-    self.assertEqual(parser._optionals._actions[2].help, '')
-    self.assertTrue(parser._optionals._actions[3].help.startswith('flagged'))
+    self.assertTrue(parser._optionals._actions[2].help.startswith('flagged'))
+    self.assertEqual(parser._optionals._actions[3].help, '')
 
 def test_positional_with_annotation_and_default(self):
     def main(opt:'help string'='default'):
