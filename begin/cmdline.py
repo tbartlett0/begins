@@ -179,7 +179,6 @@ def create_parser(func, env_prefix=None, config_file=None, config_section=None,
     while hasattr(func, '__wrapped__') and not hasattr(func, '__signature__'):
         if isinstance(func, extensions.Extension):
             func.add_arguments(parser, defaults)
-            have_extensions = True
         func = getattr(func, '__wrapped__')
     funcsig = signature(func)
     populate_parser(parser, defaults, funcsig, short_args, lexical_order, double_flags)
@@ -202,7 +201,6 @@ def create_parser(func, env_prefix=None, config_file=None, config_section=None,
             defaults.set_config_section(subfunc.__name__)
             populate_parser(subparser, defaults, funcsig, short_args,
                             lexical_order, double_flags)
-    have_extensions = False
     return parser
 
 
