@@ -171,6 +171,14 @@ def create_parser(func, env_prefix=None, config_file=None, config_section=None,
             description = func.__doc__,
             formatter_class=formatter_class
     )
+    # Main function
+    while hasattr(func, '__wrapped__') and not hasattr(func, '__signature__'):
+        if isinstance(func, extensions.Extension):
+            func.add_arguments(parser, defaults)
+        func = getattr(func, '__wrapped__')
+    funcsig = signature(func)
+    populate_parser(parser, defaults, funcsig, short_args, lexical_order)
+    # Subcommands
     collector = collector if collector is not None else subcommands.COLLECTORS[sub_group]
     if plugins is not None:
         collector.load_plugins(plugins)
@@ -188,14 +196,6 @@ def create_parser(func, env_prefix=None, config_file=None, config_section=None,
                     formatter_class=formatter_class)
             defaults.set_config_section(subfunc.__name__)
             populate_parser(subparser, defaults, funcsig, short_args, lexical_order)
-    have_extensions = False
-    while hasattr(func, '__wrapped__') and not hasattr(func, '__signature__'):
-        if isinstance(func, extensions.Extension):
-            func.add_arguments(parser, defaults)
-            have_extensions = True
-        func = getattr(func, '__wrapped__')
-    funcsig = signature(func)
-    populate_parser(parser, defaults, funcsig, short_args, lexical_order)
     return parser
 
 
